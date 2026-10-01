@@ -1,0 +1,431 @@
+/* style.css */
+:root {
+    --bg-black: #09090b;
+    --card-bg: #121215;
+    --border-color: #27272a;
+    --green-primary: #10b981;
+    --green-hover: #059669;
+    --green-light: rgba(16, 185, 129, 0.1);
+    --white: #ffffff;
+    --gray-text: #a1a1aa;
+    --gray-dark: #18181b;
+    --red-alert: #ef4444;
+    --yellow-warn: #f59e0b;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-black);
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo-icon {
+    background-color: var(--green-primary);
+    color: var(--bg-black);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.demo-badge {
+    background-color: var(--green-light);
+    color: var(--green-primary);
+    border: 1px solid var(--green-primary);
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.status-indicator {
+    color: var(--gray-text);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-indicator .dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--green-primary);
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Main Layout */
+.main-container {
+    display: flex;
+    flex: 1;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 260px;
+    background-color: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 1.5rem 1rem;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nav-links li {
+    padding: 0.85rem 1rem;
+    border-radius: 6px;
+    color: var(--gray-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+}
+
+.nav-links li:hover {
+    background-color: var(--gray-dark);
+    color: var(--white);
+}
+
+.nav-links li.active {
+    background-color: var(--green-primary);
+    color: var(--bg-black);
+    font-weight: 600;
+}
+
+/* Workspace */
+.workspace {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.step-panel {
+    display: none;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.step-panel.active {
+    display: flex;
+}
+
+.panel-header h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.panel-header p {
+    color: var(--gray-text);
+}
+
+/* Buttons */
+.btn {
+    padding: 0.65rem 1.25rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background-color: var(--green-primary);
+    color: var(--bg-black);
+}
+
+.btn-primary:hover {
+    background-color: var(--green-hover);
+}
+
+.btn-secondary {
+    background-color: var(--gray-dark);
+    color: var(--white);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--border-color);
+}
+
+.btn-accept {
+    background-color: var(--green-light);
+    color: var(--green-primary);
+    border: 1px solid var(--green-primary);
+}
+
+.btn-reject {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--red-alert);
+    border: 1px solid var(--red-alert);
+}
+
+/* Ingestion Section */
+.ingest-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.dropzone, .sample-box {
+    background-color: var(--card-bg);
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 3rem 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.dropzone:hover {
+    border-color: var(--green-primary);
+}
+
+.drop-icon, .sample-icon {
+    font-size: 2.5rem;
+    color: var(--green-primary);
+}
+
+/* Data Tables */
+.table-wrapper {
+    overflow-x: auto;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 350px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.875rem;
+}
+
+th, td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+th {
+    background-color: var(--gray-dark);
+    color: var(--gray-text);
+    font-weight: 600;
+}
+
+/* Dynamic Highlights */
+.cell-missing {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: var(--red-alert);
+    font-style: italic;
+}
+
+.cell-invalid {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: var(--yellow-warn);
+}
+
+.cell-duplicate {
+    background-color: rgba(168, 85, 247, 0.2);
+}
+
+/* Profiling Metrics */
+.metrics-overview {
+    display: flex;
+    gap: 2rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.score-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--border-color);
+    padding-right: 2rem;
+}
+
+.score-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid var(--yellow-warn);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--yellow-warn);
+    margin-bottom: 0.5rem;
+}
+
+.stats-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.stat-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.stat-title {
+    font-size: 0.85rem;
+    color: var(--gray-text);
+}
+
+.progress-bar {
+    height: 8px;
+    background-color: var(--gray-dark);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--green-primary);
+}
+
+/* Step Cards for HITL */
+.steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.step-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.step-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.step-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.power-query-desc {
+    background-color: var(--gray-dark);
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    border-left: 3px solid var(--green-primary);
+}
+
+.step-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* Step Status Classes */
+.step-card.accepted {
+    border-color: var(--green-primary);
+}
+
+.step-card.rejected {
+    border-color: var(--red-alert);
+    opacity: 0.6;
+}
+
+/* Execution Summary */
+.execution-summary {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.result-banner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3rem;
+}
+
+.result-metric .lbl {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--gray-text);
+}
+
+.result-metric .val {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.val.bad { color: var(--red-alert); }
+.val.good { color: var(--green-primary); }
+
+.hidden { display: none !important; }
+.badge {
+    background-color: var(--gray-dark);
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
