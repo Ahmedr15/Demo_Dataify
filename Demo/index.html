@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,204 +5,156 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dataify - Interactive Platform Demonstration</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+<header class="navbar">
+    <div class="logo-container">
+        <div class="logo-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <span class="logo-text">Dataify</span>
+        <span class="demo-badge">Interactive Demo</span>
+    </div>
+    <div class="header-actions">
+        <span class="status-indicator"><span class="dot"></span> Platform Mode: Simulated Engine</span>
+    </div>
+</header>
 
-    <!-- Top Navigation Header -->
-    <header class="navbar">
-        <div class="logo-container">
-            <div class="logo-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-            <span class="logo-text">Dataify</span>
-            <span class="demo-badge">Interactive Demo</span>
+<main class="main-container">
+    <aside class="sidebar">
+        <h4>Data Source</h4>
+        <ul class="nav-links" id="source-tabs">
+            <li class="active" data-source="csv"><i class="fa-solid fa-file-csv"></i> CSV File</li>
+            <li data-source="json"><i class="fa-solid fa-code"></i> JSON</li>
+            <li data-source="db"><i class="fa-solid fa-database"></i> Database Connection</li>
+            <li data-source="text"><i class="fa-solid fa-align-left"></i> Plain Text</li>
+        </ul>
+        <div class="sidebar-note">
+            Dataify cleans your data automatically. Confirm each action yourself, or let it run everything with one click.
         </div>
-        <div class="header-actions">
-            <span class="status-indicator"><span class="dot"></span> Platform Mode: Simulated Engine</span>
+    </aside>
+
+    <section class="workspace">
+        <div class="panel-header">
+            <h2>Automated Data Cleaning</h2>
+            <p>Bring data in any format. Dataify detects the issues and prepares the cleaning actions for you.</p>
         </div>
-    </header>
 
-    <!-- Main Container -->
-    <main class="main-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <ul class="nav-links">
-                <li class="active" data-step="1"><i class="fa-solid fa-file-csv"></i> 1. Ingest Data</li>
-                <li data-step="2"><i class="fa-solid fa-magnifying-glass-chart"></i> 2. Profile Quality</li>
-                <li data-step="3"><i class="fa-solid fa-list-check"></i> 3. Governance (HITL)</li>
-                <li data-step="4"><i class="fa-solid fa-bolt"></i> 4. Execution & Audit</li>
-            </ul>
-        </aside>
+        <!-- INPUT -->
+        <div class="source-panel active" id="panel-csv">
+            <h3><i class="fa-solid fa-file-csv"></i> Upload a CSV file</h3>
+            <div class="dropzone" id="dropzone-csv">
+                <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+                <p>Drag and drop a .csv file here</p>
+                <input type="file" id="file-csv" accept=".csv" hidden>
+                <button class="btn btn-secondary" onclick="document.getElementById('file-csv').click()">Browse File</button>
+                <span class="file-name" id="name-csv"></span>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="startAnalysis('csv')"><i class="fa-solid fa-play"></i> Analyze Data</button>
+                <button class="btn btn-secondary" onclick="startAnalysis('csv', true)">Use Sample Data</button>
+            </div>
+        </div>
 
-        <!-- Main Workspace -->
-        <section class="workspace">
-            
-            <!-- STEP 1: INGESTION -->
-            <div class="step-panel active" id="step-1">
-                <div class="panel-header">
-                    <h2>Step 1: Dataset & Metadata Ingestion[cite: 2]</h2>
-                    <p>Upload a custom dataset file or load a sample dataset to simulate the automated profiling engine[cite: 2].</p>
+        <div class="source-panel" id="panel-json">
+            <h3><i class="fa-solid fa-code"></i> JSON data</h3>
+            <p class="hint">Upload a .json file or paste JSON below.</p>
+            <div class="btn-row">
+                <input type="file" id="file-json" accept=".json" hidden>
+                <button class="btn btn-secondary" onclick="document.getElementById('file-json').click()"><i class="fa-solid fa-upload"></i> Upload .json</button>
+                <span class="file-name" id="name-json"></span>
+            </div>
+            <textarea id="text-json" placeholder='[{"id": 101, "name": "John Doe", "age": 28}]'></textarea>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="startAnalysis('json')"><i class="fa-solid fa-play"></i> Analyze Data</button>
+                <button class="btn btn-secondary" onclick="startAnalysis('json', true)">Use Sample Data</button>
+            </div>
+        </div>
+
+        <div class="source-panel" id="panel-db">
+            <h3><i class="fa-solid fa-database"></i> Database connection</h3>
+            <div class="field-grid">
+                <label class="field">Database Type
+                    <select id="db-type"><option>PostgreSQL</option><option>MySQL</option><option>SQL Server</option><option>Oracle</option><option>MongoDB</option></select>
+                </label>
+                <label class="field">Host <input type="text" id="db-host" placeholder="db.company.com"></label>
+                <label class="field">Port <input type="text" id="db-port" placeholder="5432"></label>
+                <label class="field">Database Name <input type="text" id="db-name" placeholder="sales_db"></label>
+                <label class="field">Username <input type="text" id="db-user" placeholder="analyst"></label>
+                <label class="field">Password <input type="password" id="db-pass" placeholder="••••••••"></label>
+                <label class="field">Table / Collection <input type="text" id="db-table" placeholder="customers"></label>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="startAnalysis('db')"><i class="fa-solid fa-plug"></i> Connect &amp; Analyze</button>
+                <button class="btn btn-secondary" onclick="startAnalysis('db', true)">Use Sample Connection</button>
+            </div>
+        </div>
+
+        <div class="source-panel" id="panel-text">
+            <h3><i class="fa-solid fa-align-left"></i> Plain text</h3>
+            <p class="hint">Paste any raw text, logs, or semi-structured records.</p>
+            <textarea id="text-text" placeholder="John Doe, 28, $150.00, Active&#10;Jane Smith, N/A, $230.50, active"></textarea>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="startAnalysis('text')"><i class="fa-solid fa-play"></i> Analyze Data</button>
+                <button class="btn btn-secondary" onclick="startAnalysis('text', true)">Use Sample Text</button>
+            </div>
+        </div>
+
+        <!-- ANALYSIS + CLEANING -->
+        <div class="section hidden" id="cleaning-section">
+            <div class="dataset-preview-container">
+                <div class="table-header-info">
+                    <h3><i class="fa-solid fa-table"></i> Detected Dataset <span class="badge" id="source-badge"></span></h3>
+                    <span class="badge" id="row-count-badge"></span>
                 </div>
+                <div class="table-wrapper"><table id="data-table"><thead></thead><tbody></tbody></table></div>
+            </div>
 
-                <div class="ingest-grid">
-                    <div class="dropzone" id="dropzone">
-                        <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
-                        <h3>Drag and Drop Dataset Here</h3>
-                        <p>Supports .CSV format (Max 50MB)</p>
-                        <input type="file" id="file-input" accept=".csv" hidden>
-                        <button class="btn btn-secondary" onclick="document.getElementById('file-input').click()">Browse File</button>
-                    </div>
-
-                    <div class="sample-box">
-                        <div class="sample-content">
-                            <i class="fa-solid fa-database sample-icon"></i>
-                            <h3>Quick Demonstration Data</h3>
-                            <p>Load an enterprise dirty dataset pre-populated with duplicate rows, missing values, schema type conflicts, and invalid values[cite: 1, 2].</p>
-                            <button class="btn btn-primary" id="btn-load-sample">
-                                <i class="fa-solid fa-play"></i> Load Sample Dataset
-                            </button>
-                        </div>
-                    </div>
+            <div class="metrics-overview">
+                <div class="score-card">
+                    <div class="score-circle" id="overall-score">68%</div>
+                    <div class="score-label">Data Health Score</div>
                 </div>
-
-                <div class="dataset-preview-container hidden" id="dataset-preview-section">
-                    <div class="table-header-info">
-                        <h3><i class="fa-solid fa-table"></i> Raw Ingested Dataset Preview</h3>
-                        <span class="badge" id="row-count-badge">0 Rows Loaded</span>
-                    </div>
-                    <div class="table-wrapper">
-                        <table id="preview-table">
-                            <thead></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                    <div class="action-footer">
-                        <button class="btn btn-primary" id="btn-goto-step2">
-                            Proceed to Automated Profiling <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                    </div>
+                <div class="stats-grid">
+                    <div class="stat-box"><span class="stat-title">Completeness</span><div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div><span class="stat-val">Missing values found</span></div>
+                    <div class="stat-box"><span class="stat-title">Uniqueness</span><div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div><span class="stat-val">Duplicate record found</span></div>
+                    <div class="stat-box"><span class="stat-title">Consistency</span><div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div><span class="stat-val">Mixed formats</span></div>
+                    <div class="stat-box"><span class="stat-title">Validity</span><div class="progress-bar"><div class="progress-fill" style="width:70%"></div></div><span class="stat-val">Invalid values</span></div>
                 </div>
             </div>
 
-            <!-- STEP 2: PROFILING -->
-            <div class="step-panel" id="step-2">
-                <div class="panel-header">
-                    <h2>Step 2: Automated Multi-Dimensional Profiling[cite: 1, 2]</h2>
-                    <p>Dataify evaluates completeness, uniqueness, accuracy, consistency, and validity across data and metadata layers[cite: 1, 2].</p>
-                </div>
+            <div class="mode-bar">
+                <p><strong>Choose how to proceed:</strong> confirm each cleaning action below, or run every suitable action without confirmation.</p>
+                <button class="btn btn-primary" id="btn-auto"><i class="fa-solid fa-bolt"></i> Execute Automatically</button>
+            </div>
+            <div class="progress-wrap"><div id="progress-bar"></div></div>
+            <div class="steps-list" id="steps-container"></div>
+        </div>
 
-                <div class="metrics-overview">
-                    <div class="score-card">
-                        <div class="score-circle" id="overall-score">68%</div>
-                        <div class="score-label">Overall Health Score[cite: 3]</div>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-box">
-                            <span class="stat-title">Completeness[cite: 1]</span>
-                            <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
-                            <span class="stat-val">75% (12 Missing Entries)[cite: 2]</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="stat-title">Uniqueness[cite: 1]</span>
-                            <div class="progress-bar"><div class="progress-fill" style="width: 80%;"></div></div>
-                            <span class="stat-val">80% (1 Duplicate Row)[cite: 1]</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="stat-title">Type Consistency[cite: 1]</span>
-                            <div class="progress-bar"><div class="progress-fill" style="width: 60%;"></div></div>
-                            <span class="stat-val">60% (Schema Drift / Inconsistent Types)[cite: 1, 2]</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="stat-title">Accuracy & Validity[cite: 1]</span>
-                            <div class="progress-bar"><div class="progress-fill" style="width: 70%;"></div></div>
-                            <span class="stat-val">70% (Negative values & unstandardized text)[cite: 1]</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="action-footer">
-                    <button class="btn btn-primary" id="btn-goto-step3">
-                        Review Cleaning Plan (HITL Framework) <i class="fa-solid fa-arrow-right"></i>
-                    </button>
+        <!-- RESULT -->
+        <div class="section hidden" id="result-section">
+            <div class="execution-summary">
+                <div class="result-banner">
+                    <div class="result-metric"><span class="lbl">Initial Quality Score</span><span class="val bad">68%</span></div>
+                    <i class="fa-solid fa-angles-right arrow-icon"></i>
+                    <div class="result-metric"><span class="lbl">Final Quality Score</span><span class="val good" id="final-score">68%</span></div>
                 </div>
             </div>
-
-            <!-- STEP 3: GOVERNANCE / HITL -->
-            <div class="step-panel" id="step-3">
-                <div class="panel-header">
-                    <h2>Step 3: Human-In-The-Loop (HITL) Governance[cite: 1, 2]</h2>
-                    <p>Review every remediation step proposed by the engine[cite: 1, 2]. Accept, modify, or stop individual steps before execution[cite: 2].</p>
-                </div>
-
-                <div class="steps-list" id="steps-container">
-                    <!-- Transformation Step Cards injected by JS -->
-                </div>
-
-                <div class="action-footer">
-                    <button class="btn btn-primary" id="btn-execute-plan">
-                        <i class="fa-solid fa-bolt"></i> Execute Approved Remediation Pipeline[cite: 2]
-                    </button>
+            <div class="audit-section">
+                <div class="table-header-info"><h3><i class="fa-solid fa-clipboard-list"></i> Audit Log</h3></div>
+                <div class="table-wrapper">
+                    <table id="audit-table">
+                        <thead><tr><th>Action</th><th>Decision</th><th>Mode</th><th>Time</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
-
-            <!-- STEP 4: EXECUTION & AUDIT -->
-            <div class="step-panel" id="step-4">
-                <div class="panel-header">
-                    <h2>Step 4: Remediation Execution & Immutable Audit Trail[cite: 2, 3]</h2>
-                    <p>View final results, audit log history, and download the output dataset[cite: 3].</p>
-                </div>
-
-                <div class="execution-summary">
-                    <div class="result-banner">
-                        <div class="result-metric">
-                            <span class="lbl">Initial Quality Score[cite: 3]</span>
-                            <span class="val bad">68%</span>
-                        </div>
-                        <i class="fa-solid fa-angles-right arrow-icon"></i>
-                        <div class="result-metric">
-                            <span class="lbl">Remediated Quality Score[cite: 3]</span>
-                            <span class="val good" id="final-score">96%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="audit-section">
-                    <h3><i class="fa-solid fa-clipboard-list"></i> Audit Log Trail[cite: 3]</h3>
-                    <div class="table-wrapper">
-                        <table id="audit-table">
-                            <thead>
-                                <tr>
-                                    <th>Step ID</th>
-                                    <th>Operation Name</th>
-                                    <th>Decision Status[cite: 2]</th>
-                                    <th>Configuration Notes</th>
-                                    <th>Timestamp</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="final-data-section">
-                    <div class="table-header-info">
-                        <h3><i class="fa-solid fa-database"></i> Processed Clean Dataset Preview</h3>
-                        <button class="btn btn-secondary" id="btn-download-csv">
-                            <i class="fa-solid fa-download"></i> Download Cleaned CSV
-                        </button>
-                    </div>
-                    <div class="table-wrapper">
-                        <table id="processed-table">
-                            <thead></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="action-footer">
+                <button class="btn btn-secondary" id="btn-download"><i class="fa-solid fa-download"></i> Download Cleaned CSV</button>
+                <button class="btn btn-primary" id="btn-restart"><i class="fa-solid fa-rotate-left"></i> Start Over</button>
             </div>
-
-        </section>
-    </main>
-
-    <script src="script.js"></script>
+        </div>
+    </section>
+</main>
+<script src="script.js"></script>
 </body>
 </html>

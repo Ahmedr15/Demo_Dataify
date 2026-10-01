@@ -1,196 +1,182 @@
-// script.js
+// Dataify demo - everything is simulated with pre-defined data (no real processing).
 
-// Global state simulation
-const rawDataset = [
-    { id: "101", name: "John Doe", age: "28", spend: "$150.00", status: "Active", date: "2026-01-10" },
-    { id: "102", name: "Jane Smith", age: "N/A", spend: "$230.50", status: "active ", date: "2026/01/11" },
-    { id: "103", name: "Robert Cheney", age: "45", spend: "-$50.00", status: "Inactive", date: "12-01-2026" },
-    { id: "104", name: "Alice Brown", age: "31", spend: "$500.00", status: "ACTIVE", date: "2026-01-13" },
-    { id: "101", name: "John Doe", age: "28", spend: "$150.00", status: "Active", date: "2026-01-10" }, // Duplicate
-    { id: "105", name: "Emily Davis", age: "NaN", spend: "$80.20", status: "Pending", date: "2026-01-15" }
+const HEADERS = ["id", "name", "age", "spend", "status", "date"];
+
+// A cell is a plain value, or {r: raw, f: fixed, s: action index that fixes it}
+const ROWS = [
+    ["101", "John Doe", "28", "$150.00", "Active", "2026-01-10"],
+    ["102", "Jane Smith", {r:"N/A", f:"30", s:1}, "$230.50", {r:"active ", f:"Active", s:4}, {r:"2026/01/11", f:"2026-01-11", s:3}],
+    ["103", "Robert Cheney", "45", {r:"-$50.00", f:"0.00", s:2}, "Inactive", {r:"12-01-2026", f:"2026-01-12", s:3}],
+    ["104", "Alice Brown", "31", "$500.00", {r:"ACTIVE", f:"Active", s:4}, "2026-01-13"],
+    {dupOf: 0, s: 0, cells: ["101", "John Doe", "28", "$150.00", "Active", "2026-01-10"]},
+    ["105", "Emily Davis", {r:"NaN", f:"30", s:1}, "$80.20", "Pending", "2026-01-15"]
 ];
 
-let transformationSteps = [
-    {
-        id: "STEP-01",
-        name: "Deduplication Strategy",
-        type: "Uniqueness",
-        description: "Power Query Details: Detected 1 exact duplicate record (Row #5 matching Row #1 across key columns). Action will drop duplicate rows.",
-        status: "ACCEPTED",
-        config: "Exact Match Rule"
-    },
-    {
-        id: "STEP-02",
-        name: "Missing Value Imputation (Age Column)",
-        type: "Completeness",
-        description: "Power Query Details: Found non-numeric missing entries ('N/A', 'NaN') in column 'age'. Recommended action is Median Imputation (Calculated Median = 30).",
-        status: "ACCEPTED",
-        config: "Median Imputation"
-    },
-    {
-        id: "STEP-03",
-        name: "Currency & Anomaly Normalization (Spend Column)",
-        type: "Accuracy",
-        description: "Power Query Details: Strip '$' characters, cast to Float, and set negative invalid spend entries (-$50.00) to 0.00 absolute value.",
-        status: "ACCEPTED",
-        config: "Absolute Non-Negative Conversion"
-    },
-    {
-        id: "STEP-04",
-        name: "Text Standardization (Status Column)",
-        type: "Consistency",
-        description: "Power Query Details: Standardize categorical values ('active ', 'ACTIVE') into Title Case 'Active'.",
-        status: "ACCEPTED",
-        config: "Trim Spaces & Capitalize"
-    }
+const ACTIONS = [
+    { name: "Remove duplicate records", type: "Uniqueness", gain: 6, desc: "1 exact duplicate row detected. Suggested action: remove it." },
+    { name: "Fill missing values", type: "Completeness", gain: 6, desc: "Missing entries found in the 'age' column. Suggested action: fill them with a typical value." },
+    { name: "Fix invalid amounts", type: "Validity", gain: 6, desc: "Currency symbols and a negative amount found in 'spend'. Suggested action: convert to clean positive numbers." },
+    { name: "Standardize date format", type: "Consistency", gain: 5, desc: "Dates appear in 3 different formats. Suggested action: unify to YYYY-MM-DD." },
+    { name: "Standardize text values", type: "Consistency", gain: 5, desc: "'status' has inconsistent spelling and spacing. Suggested action: unify to one style." }
 ];
 
-// Navigation Logic
-document.querySelectorAll('.nav-links li').forEach(item => {
-    item.addEventListener('click', function () {
-        const step = this.getAttribute('data-step');
-        switchStep(step);
+const SOURCE_LABELS = { csv: "CSV", json: "JSON", db: "Database", text: "Text" };
+const BASE_SCORE = 68;
+
+let state = { decisions: [], running: false, source: "csv", mode: "Manual" };
+
+const $ = id => document.getElementById(id);
+
+// ---------- Source tabs ----------
+document.querySelectorAll('#source-tabs li').forEach(li => {
+    li.addEventListener('click', () => {
+        document.querySelectorAll('#source-tabs li').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.source-panel').forEach(p => p.classList.remove('active'));
+        li.classList.add('active');
+        $('panel-' + li.dataset.source).classList.add('active');
     });
 });
 
-function switchStep(stepNumber) {
-    document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
-    document.querySelectorAll('.step-panel').forEach(panel => panel.classList.remove('active'));
-
-    document.querySelector(`.nav-links li[data-step="${stepNumber}"]`).classList.add('active');
-    document.getElementById(`step-${stepNumber}`).classList.add('active');
-}
-
-// Load Sample Dataset
-document.getElementById('btn-load-sample').addEventListener('click', () => {
-    renderRawTable(rawDataset);
-    document.getElementById('dataset-preview-section').classList.remove('hidden');
-    document.getElementById('row-count-badge').textContent = `${rawDataset.length} Records Loaded`;
-});
-
-function renderRawTable(data) {
-    const table = document.getElementById('preview-table');
-    const thead = table.querySelector('thead');
-    const tbody = table.querySelector('tbody');
-
-    thead.innerHTML = '';
-    tbody.innerHTML = '';
-
-    if (data.length === 0) return;
-
-    const headers = Object.keys(data[0]);
-    let trHead = '<tr>';
-    headers.forEach(h => trHead += `<th>${h.toUpperCase()}</th>`);
-    trHead += '</tr>';
-    thead.innerHTML = trHead;
-
-    data.forEach((row, idx) => {
-        let tr = '<tr>';
-        headers.forEach(h => {
-            let val = row[h];
-            let cls = '';
-            if (val === 'N/A' || val === 'NaN') cls = 'cell-missing';
-            if (val.includes('-')) cls = 'cell-invalid';
-            if (idx === 4) cls = 'cell-duplicate';
-            tr += `<td class="${cls}">${val}</td>`;
-        });
-        tr += '</tr>';
-        tbody.innerHTML += tr;
+// File pickers: only show the file name (demo does not read the data)
+[['file-csv','name-csv'], ['file-json','name-json']].forEach(([inp, lbl]) => {
+    $(inp).addEventListener('change', e => {
+        if (e.target.files[0]) $(lbl).textContent = e.target.files[0].name;
     });
-}
-
-// Flow Next Handlers
-document.getElementById('btn-goto-step2').addEventListener('click', () => switchStep(2));
-document.getElementById('btn-goto-step3').addEventListener('click', () => {
-    renderHITLSteps();
-    switchStep(3);
+});
+const dz = $('dropzone-csv');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--green-primary)'; });
+dz.addEventListener('dragleave', () => dz.style.borderColor = '');
+dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.style.borderColor = '';
+    if (e.dataTransfer.files[0]) $('name-csv').textContent = e.dataTransfer.files[0].name;
 });
 
-function renderHITLSteps() {
-    const container = document.getElementById('steps-container');
-    container.innerHTML = '';
+// ---------- Start analysis ----------
+function startAnalysis(source) {
+    state = { decisions: ACTIONS.map(() => null), running: false, source, mode: "Manual" };
+    $('source-badge').textContent = SOURCE_LABELS[source] + " source";
+    $('row-count-badge').textContent = ROWS.length + " records loaded";
+    $('audit-table').querySelector('tbody').innerHTML = '';
+    $('result-section').classList.add('hidden');
+    $('cleaning-section').classList.remove('hidden');
+    $('btn-auto').disabled = false;
+    renderTable();
+    renderActions();
+    updateProgress();
+    $('cleaning-section').scrollIntoView({ behavior: 'smooth' });
+}
 
-    transformationSteps.forEach((step, index) => {
-        const card = document.createElement('div');
-        card.className = `step-card ${step.status.toLowerCase()}`;
-        card.innerHTML = `
+// ---------- Rendering ----------
+function renderTable() {
+    const applied = i => state.decisions[i] === 'applied';
+    $('data-table').querySelector('thead').innerHTML =
+        '<tr>' + HEADERS.map(h => `<th>${h.toUpperCase()}</th>`).join('') + '</tr>';
+    $('data-table').querySelector('tbody').innerHTML = ROWS.map(row => {
+        const isDup = !Array.isArray(row);
+        const cells = isDup ? row.cells : row;
+        const removed = isDup && applied(row.s);
+        const tds = cells.map(c => {
+            if (typeof c === 'string') return `<td class="${isDup && !removed ? 'cell-duplicate' : ''}">${c}</td>`;
+            if (applied(c.s)) return `<td class="fixed-cell">${c.f}</td>`;
+            const cls = (c.s === 1) ? 'cell-missing' : 'cell-invalid';
+            return `<td class="${cls}">${c.r}</td>`;
+        }).join('');
+        return `<tr class="${removed ? 'removed-row' : ''}">${tds}</tr>`;
+    }).join('');
+}
+
+function renderActions() {
+    $('steps-container').innerHTML = ACTIONS.map((a, i) => {
+        const d = state.decisions[i];
+        const label = d === 'applied' ? 'Applied' : d === 'skipped' ? 'Skipped' : d === 'running' ? 'Running...' : 'Waiting for confirmation';
+        const locked = d !== null || state.running;
+        return `
+        <div class="step-card ${d || ''}">
             <div class="step-card-header">
-                <span class="step-title"><i class="fa-solid fa-gears"></i> ${step.id}: ${step.name}</span>
-                <span class="badge">${step.type}</span>
+                <span class="step-title"><i class="fa-solid fa-gears"></i> ${i + 1}. ${a.name}</span>
+                <span><span class="badge">${a.type}</span> <span class="status-pill">${label}</span></span>
             </div>
-            <div class="power-query-desc">
-                ${step.description}
-            </div>
+            <div class="power-query-desc">${a.desc}</div>
             <div class="step-actions">
-                <button class="btn btn-accept" onclick="toggleStepStatus(${index}, 'ACCEPTED')">
-                    <i class="fa-solid fa-check"></i> ${step.status === 'ACCEPTED' ? 'Accepted' : 'Accept Step'}
-                </button>
-                <button class="btn btn-reject" onclick="toggleStepStatus(${index}, 'REJECTED')">
-                    <i class="fa-solid fa-xmark"></i> ${step.status === 'REJECTED' ? 'Stopped' : 'Stop Step'}
-                </button>
+                <button class="btn btn-accept" ${locked ? 'disabled' : ''} onclick="decide(${i}, 'applied')"><i class="fa-solid fa-check"></i> Confirm &amp; Apply</button>
+                <button class="btn btn-skip" ${locked ? 'disabled' : ''} onclick="decide(${i}, 'skipped')"><i class="fa-solid fa-forward"></i> Skip</button>
             </div>
-        `;
-        container.appendChild(card);
-    });
+        </div>`;
+    }).join('');
 }
 
-window.toggleStepStatus = function(index, newStatus) {
-    transformationSteps[index].status = newStatus;
-    renderHITLSteps();
-};
+function updateProgress() {
+    const done = state.decisions.filter(d => d === 'applied' || d === 'skipped').length;
+    $('progress-bar').style.width = (done / ACTIONS.length * 100) + '%';
+    const score = BASE_SCORE + ACTIONS.reduce((s, a, i) => s + (state.decisions[i] === 'applied' ? a.gain : 0), 0);
+    const el = $('overall-score');
+    el.textContent = score + '%';
+    el.classList.toggle('good', score >= 90);
+}
 
-document.getElementById('btn-execute-plan').addEventListener('click', () => {
-    executeRemediationPipeline();
-    switchStep(4);
+// ---------- Decisions ----------
+function logAudit(i, decision) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${ACTIONS[i].name}</td>
+        <td><span class="badge" style="color:${decision === 'applied' ? '#10b981' : '#f59e0b'}">${decision.toUpperCase()}</span></td>
+        <td>${state.mode}</td><td>${new Date().toLocaleTimeString()}</td>`;
+    $('audit-table').querySelector('tbody').appendChild(tr);
+}
+
+function decide(i, decision) {
+    state.decisions[i] = decision;
+    logAudit(i, decision);
+    renderTable(); renderActions(); updateProgress();
+    checkFinished();
+}
+
+function checkFinished() {
+    if (state.decisions.every(d => d === 'applied' || d === 'skipped')) showResult();
+}
+
+$('btn-auto').addEventListener('click', async () => {
+    if (state.running) return;
+    state.running = true;
+    state.mode = "Automatic";
+    $('btn-auto').disabled = true;
+    for (let i = 0; i < ACTIONS.length; i++) {
+        if (state.decisions[i] !== null) continue;
+        state.decisions[i] = 'running';
+        renderActions();
+        await new Promise(r => setTimeout(r, 700));
+        state.decisions[i] = 'applied';
+        logAudit(i, 'applied');
+        renderTable(); renderActions(); updateProgress();
+    }
+    state.running = false;
+    checkFinished();
 });
 
-function executeRemediationPipeline() {
-    // Audit Trail Generation
-    const auditTbody = document.getElementById('audit-table').querySelector('tbody');
-    auditTbody.innerHTML = '';
-
-    transformationSteps.forEach(step => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${step.id}</td>
-            <td>${step.name}</td>
-            <td><span class="badge" style="color: ${step.status === 'ACCEPTED' ? '#10b981' : '#ef4444'}">${step.status}</span></td>
-            <td>${step.config}</td>
-            <td>${new Date().toLocaleTimeString()}</td>
-        `;
-        auditTbody.appendChild(tr);
-    });
-
-    // Generate Processed Dataset
-    const processedData = [
-        { id: "101", name: "John Doe", age: "28", spend: "150.00", status: "Active", date: "2026-01-10" },
-        { id: "102", name: "Jane Smith", age: "30", spend: "230.50", status: "Active", date: "2026-01-11" },
-        { id: "103", name: "Robert Cheney", age: "45", spend: "0.00", status: "Inactive", date: "2026-01-12" },
-        { id: "104", name: "Alice Brown", age: "31", spend: "500.00", status: "Active", date: "2026-01-13" },
-        { id: "105", name: "Emily Davis", age: "30", spend: "80.20", status: "Pending", date: "2026-01-15" }
-    ];
-
-    renderProcessedTable(processedData);
+function showResult() {
+    const score = BASE_SCORE + ACTIONS.reduce((s, a, i) => s + (state.decisions[i] === 'applied' ? a.gain : 0), 0);
+    $('final-score').textContent = score + '%';
+    $('result-section').classList.remove('hidden');
+    $('result-section').scrollIntoView({ behavior: 'smooth' });
 }
 
-function renderProcessedTable(data) {
-    const table = document.getElementById('processed-table');
-    const thead = table.querySelector('thead');
-    const tbody = table.querySelector('tbody');
-
-    thead.innerHTML = '';
-    tbody.innerHTML = '';
-
-    const headers = Object.keys(data[0]);
-    let trHead = '<tr>';
-    headers.forEach(h => trHead += `<th>${h.toUpperCase()}</th>`);
-    trHead += '</tr>';
-    thead.innerHTML = trHead;
-
-    data.forEach(row => {
-        let tr = '<tr>';
-        headers.forEach(h => tr += `<td>${row[h]}</td>`);
-        tr += '</tr>';
-        tbody.innerHTML += tr;
+// ---------- Download / restart ----------
+$('btn-download').addEventListener('click', () => {
+    const applied = i => state.decisions[i] === 'applied';
+    const lines = [HEADERS.join(',')];
+    ROWS.forEach(row => {
+        const isDup = !Array.isArray(row);
+        if (isDup && applied(row.s)) return;
+        const cells = isDup ? row.cells : row;
+        lines.push(cells.map(c => typeof c === 'string' ? c : (applied(c.s) ? c.f : c.r)).join(','));
     });
-}
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+    a.download = 'dataify_cleaned.csv';
+    a.click();
+});
+
+$('btn-restart').addEventListener('click', () => {
+    $('cleaning-section').classList.add('hidden');
+    $('result-section').classList.add('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
